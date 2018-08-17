@@ -20,9 +20,16 @@ describe('module', function () {
 		webhookKey: 456,
 	};
 
+	const multiConfigSettings = {
+		crazyKeyString: {
+			webhookId: 123,
+			webhookKey: 456,
+		}
+	}
+
 	const activity = {
 		changes: {
-			to : {
+			to: {
 				folder: {
 					id: 123
 				}
@@ -40,6 +47,35 @@ describe('module', function () {
 		expect($webhook.validateSecret(false, request)).to.be.false;
 		expect($webhook.validateSecret({}, request)).to.be.false;
 		expect($webhook.validateSecret({ webhookId: 125 }, request)).to.be.false;
+		expect($webhook.validateSecret(multiConfigSettings.crazyKeyString, request)).to.be.true;
+	});
+
+	it('returns only valid configId from multi configs', function () {
+		expect($webhook.getValidatedMultiConfigId(multiConfigSettings, request)).to.equal('crazyKeyString');
+
+		const reqWithBadHeader = {
+			headers: {},
+			body: {
+				webhook: {
+					id: 123
+				}
+			}
+		};
+
+		expect($webhook.getValidatedMultiConfigId(multiConfigSettings, reqWithBadHeader)).to.be.undefined;
+
+		const reqWithBadId = {
+			headers: {
+				'x-zengine-webhook-key': 456
+			},
+			body: {
+				webhook: {
+					id: 987
+				}
+			}
+		};
+
+		expect($webhook.getValidatedMultiConfigId(multiConfigSettings, reqWithBadId)).to.equal(undefined);
 	});
 
 	it('checks whether a record moved into a folder', function () {
